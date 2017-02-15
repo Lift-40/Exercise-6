@@ -20,7 +20,10 @@ def fileWrittenToRecently():
 	f = open("backup.txt", 'r')
 	backupTimestamp = int(f.readline().strip("\n").split(" ")[0])
 	f.close()
-	print("File last written to " + str(int(time.time()) - backupTimestamp) + " seconds ago")
+	if state is "slave":
+		print("[SLAVE] File last written to " + str(int(time.time()) - backupTimestamp) + " seconds ago")
+	else:
+		print("[MASTER] File last written to " + str(int(time.time()) - backupTimestamp) + " seconds ago")
 	# check timestamp in file against current time, return true or false
 	return (deadTreshold >= int(time.time()) - backupTimestamp)
 
@@ -39,13 +42,13 @@ if not os.path.isfile("backup.txt"):
 # check if file has been written to recently
 while True:
 	if not fileWrittenToRecently() and state is "slave":
-		print("Master timed out, assumed dead - state set to master")
+		print("[SLAVE] Master timed out, assumed dead - state set to master")
 		subprocess.Popen("start cmd /C py \"" + scriptPath +"\"", shell=True)
-		print("Tried to spawn new backup process")
+		print("[MASTER] Tried to spawn new backup process")
 		state = "master"
 		counter = readCounterValueFromBackup()
 	if state is "master":
-		print("Counter value: "+str(counter))
+		print("[MASTER] Counter value: "+str(counter))
 		counter = counter + 1
 		storeBackup(counter)
 	time.sleep(1)
